@@ -187,6 +187,43 @@ git push
 
 ---
 
+## 10. 운영 전환 (Resend 도메인 인증 후)
+
+> Resend **테스트 계정**은 발신 주소 `onboarding@resend.dev` 로 **본인 가입 이메일에게만** 발송됩니다.
+> 아무 주소로나 보내려면 **도메인 인증** 후 **`FROM_EMAIL` 값만** 바꾸면 됩니다. **코드 수정은 필요 없습니다.**
+> (발신 주소는 `backend/server.js` 에서 오직 `process.env.FROM_EMAIL` 하나로만 결정되며, 하드코딩된 발신 주소가 없습니다.)
+
+### 1) Resend 도메인 인증
+1. [resend.com](https://resend.com) → **Domains** → **Add Domain** → 본인 도메인 입력
+2. 안내되는 **DNS 레코드(SPF·DKIM 등)** 를 도메인 관리 콘솔에 등록
+3. 상태가 **Verified** 가 될 때까지 대기
+
+### 2) FROM_EMAIL 만 변경 (← 운영 전환의 전부)
+- **Render(운영)**: 대시보드 → 해당 서비스 → **Environment** →
+  `FROM_EMAIL` 값을 인증한 주소로 변경 → 저장 → (자동 또는 **Manual Deploy** 로) 재배포
+  ```
+  FROM_EMAIL = MESSEZE <noreply@yourdomain.com>
+  ```
+- **로컬(선택)**: `backend/.env` 의 `FROM_EMAIL` 을 동일하게 변경
+- ⚠️ `RESEND_API_KEY`, `FRONTEND_URL`, `config.js` 등 **나머지는 그대로** 두면 됩니다.
+
+### 3) (테스트용) 프런트 이메일 덮어쓰기 되돌리기
+현재는 테스트를 위해 모든 추천 기자 수신 주소를 한 이메일로 덮어쓰고 있습니다.
+실제 기자에게 보내려면 `frontend/index.html` 상단 데이터 아래의 블록을 원복하세요.
+```js
+// 되돌리기: 값을 비우면 원래 example.com 샘플 주소로 복구
+var TEST_OVERRIDE_EMAIL = '';
+```
+변경 후 `commit` · `push` 하면 GitHub Pages 에 자동 반영됩니다.
+
+### 4) 확인
+- `https://<백엔드주소>/api/health` → `from_configured: true`
+- 외부 이메일 주소로 실제 발송 테스트 → 정상 수신되면 운영 전환 완료
+
+> 정리: **운영 전환 = ①도메인 인증 → ②`FROM_EMAIL` 값 변경(재배포).** 그 외 코드/설정 변경 불필요.
+
+---
+
 ### 문제가 생기면 확인 순서
 1. 백엔드 `http://<주소>/api/health` 접속 → `resend_configured: true` 인지
 2. 브라우저 개발자도구(F12) → Console/Network 탭에서 오류 메시지 확인
