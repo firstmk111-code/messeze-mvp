@@ -5,4 +5,4 @@
 //    (예: https://messeze-mvp-backend.onrender.com)
 //  ※ 끝에 슬래시(/) 를 붙이지 마세요.
 // ============================================================
-window.API_BASE_URL = "https://messeze-mvp.onrender.com";
+window.API_BASE_URL = "https://messeze-mvp-backend.onrender.com";

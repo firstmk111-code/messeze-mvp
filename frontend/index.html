@@ -792,7 +792,6 @@ tr.on{background:var(--gl)}
       <option value="detailed">상세</option>
     </select></div>
   <button class="btn pri" onclick="generate()">기사거리 분석 시작</button>
-  <button class="btn demo" onclick="demoRun(true)" title="샘플 데이터로 자동 시연">🎬 원클릭 데모 시연</button>
   <p class="demohelp">필수(*) 항목을 입력하거나 위에서 <b>샘플 불러오기</b> 후 시작하세요. 정보가 부족하면 <b>추가 정보 질문</b>이 표시됩니다.</p>
  </aside>
 
@@ -1118,26 +1117,10 @@ tr.on{background:var(--gl)}
 
 <script>
 /* ===== 실제 기자 DB (개인 이메일 180명) ===== */
-var REPORTERS=[  /* 샘플 기자 DB (가상 데이터 · 개인정보 아님). 실제 기자 연동은 2차 개발 항목 */
-{name:'김도현',media:'샘플경제신문',email:'reporter1@example.com',field:'경제, 산업, 정책'},
-{name:'이서연',media:'샘플경제신문',email:'reporter2@example.com',field:'경제, 유통, 소비'},
-{name:'박준호',media:'테크리뷰',email:'reporter3@example.com',field:'IT, 기술, 스타트업'},
-{name:'최유진',media:'테크리뷰',email:'reporter4@example.com',field:'IT, AI, 반도체'},
-{name:'정민석',media:'산업일보',email:'reporter5@example.com',field:'산업, 제조, 수출'},
-{name:'강하늘',media:'산업일보',email:'reporter6@example.com',field:'산업, 자동차, 부품'},
-{name:'윤소라',media:'그린뉴스',email:'reporter7@example.com',field:'환경, ESG, 친환경'},
-{name:'임재원',media:'그린뉴스',email:'reporter8@example.com',field:'에너지, 탄소, 지속가능'},
-{name:'한지민',media:'지역경제신문',email:'reporter9@example.com',field:'지역, 지자체, 공공'},
-{name:'오세훈',media:'지역경제신문',email:'reporter10@example.com',field:'지역경제, 소상공인, 시장'},
-{name:'서예린',media:'헬스데일리',email:'reporter11@example.com',field:'의료, 헬스케어, 바이오'},
-{name:'배성우',media:'헬스데일리',email:'reporter12@example.com',field:'건강, 제약, 식품'},
-{name:'문가영',media:'컬처위크',email:'reporter13@example.com',field:'문화, 교육, 라이프'},
-{name:'신동협',media:'건설부동산타임스',email:'reporter14@example.com',field:'건설, 부동산, 인프라'},
-{name:'조하은',media:'스타트업투데이',email:'reporter15@example.com',field:'스타트업, 투자, 창업'},
-{name:'황시우',media:'방송뉴스',email:'reporter16@example.com',field:'방송, 사회, 이슈'}
-];
-/* ⚠️ 위 REPORTERS 는 샘플(example.com) 기자 DB 입니다. 실제 운영 시 실제 기자 이메일로 교체하세요.
-   메일 발송 수신자는 "선택한 기자의 email 필드"를 그대로 사용합니다. (테스트용 이메일 덮어쓰기 제거됨) */
+/* 기자 DB 는 프런트에 두지 않는다. (실제 이메일 공개 노출 방지)
+   백엔드(/api/reporters/search)에서 마스킹된 이메일로 검색·표시하고,
+   발송 시 reporterId 로 서버가 실제 이메일을 조회해 전송한다. */
+var REPORTERS=[];
 
 var SIGDEFS=[
  {key:'eco',label:'친환경·ESG',tag:'esg',re:/친환경|재활용|탄소|에코|그린|ESG|저감|지속가능|폐기물|순환/},
@@ -1454,15 +1437,26 @@ var SYN={'디자인':['디자인','문화','콘텐츠'],'마케팅':['마케팅'
 var TERMW={'디자인':24,'마케팅':22,'브랜드':20,'콘텐츠':22,'문화':12,'it':10,'과학':8,'산업':12,'경제':12,'환경':14,'건설':12,'지역':12,'사회':11,'안전':10,'국제':10,'정치':6,'유통':12,'기업':10,'무역':12,'패션':12,'생활':10};
 function probes(t){return SYN[t]?[t].concat(SYN[t]):[t];}
 function tokenize(s){return (s||'').toLowerCase().split(/[\s,.\/·\(\)\[\]#"'’“”\-–—|>]+/).map(function(t){return t.trim();}).filter(function(t){return t.length>=2&&t!=='추가'&&t!=='확인'&&t!=='필요';});}
-function buildMatches(){
- var toks=tokenize(_val('f_kw')).concat(tokenize(_val('f_ind'))).concat(tokenize(_val('f_topic'))).concat(tokenize(_val('f_about')));
- var target={};toks.forEach(function(t){probes(t).forEach(function(p){if(p.length>=2)target[p.toLowerCase()]=true;});});
- var terms=Object.keys(target);
- var scored=REPORTERS.map(function(r){var hay=(r.field||'').toLowerCase();var found=[];var score=40;terms.forEach(function(tm){if(hay.indexOf(tm)>=0){score+=(TERMW[tm]||8);found.push(tm);}});if(r.email&&r.email.indexOf('@')>=0)score+=8;else score-=25;if(score>99)score=99;if(score<0)score=0;return {r:r,score:score,matched:found};});
- scored.sort(function(a,b){if(b.score!==a.score)return b.score-a.score;if(b.matched.length!==a.matched.length)return b.matched.length-a.matched.length;return (a.r.media||'').localeCompare(b.r.media||'');});
- matchTotal=scored.filter(function(o){return o.matched.length>0;}).length;
- REPS=scored.slice(0,60).map(function(o,i){var r=o.r;var rep={rank:i+1,name:r.name,media:r.media,email:r.email||'',field:r.field||'',matched:o.matched,score:o.score,tone:reporterTone(r)};rep.reasons=reporterReasons(rep);rep.why=rep.reasons.join(' / ');return rep;});
- selRep=0;repShown=5;repChosen=false;
+/* 기자 매칭 — 백엔드에서 검색(마스킹 이메일). 실제 이메일은 서버에만. */
+async function buildMatches(){
+ REPS=[]; matchTotal=0; selRep=0; repShown=5; repChosen=false;
+ var toks=tokenize(_val('f_kw')).concat(tokenize(_val('f_ind'))).concat(tokenize(_val('f_topic'))).concat(tokenize(_val('f_product'))).concat(tokenize(_val('f_about')));
+ var q=toks.filter(Boolean).join(',');
+ var base=String(window.API_BASE_URL||'').replace(/\/+$/,'');
+ try{
+  var res=await fetch(base+'/api/reporters/search?q='+encodeURIComponent(q)+'&limit=60');
+  if(!res.ok) throw 0;
+  var j=await res.json();
+  if(j&&j.ok&&Array.isArray(j.reporters)){
+   matchTotal=j.total||j.reporters.length;
+   REPS=j.reporters.map(function(o,i){
+    var rep={rank:i+1,id:o.id,name:o.name||'(이름 미상)',media:o.media||'',email:o.emailMasked||'',field:o.field||'',matched:[],score:o.score||50,tone:reporterTone({media:o.media,field:o.field})};
+    rep.reasons=(typeof reporterReasons==='function')?reporterReasons(rep):[];
+    rep.why=rep.reasons.join(' / ');
+    return rep;
+   });
+  }
+ }catch(e){ REPS=[]; }
 }
 function reporterTone(r){var m=r.media||'',f=(r.field||'');if(/KBS|MBC|SBS|JTBC|YTN|방송|tbs|채널|TV/.test(m)||/방송|영상/.test(f))return '방송';if(/경제|매경|한경|머니|이데일리|서울경제|파이낸셜|아시아경제|헤럴드|뉴스핌|비즈|이코노/.test(m)||/경제|금융|증권/.test(f))return '경제지';if(/(일보|일간|신문)/.test(m)&&/대구|부산|광주|대전|강원|경북|경남|전북|전남|인천|울산|제주|지역|매일/.test(m+f))return '지역지';if(/IT|전자|디지털|테크|산업|과학|바이오|메디|헬스|디자인|문화|건설|환경/.test(f))return '전문지';return '종합지';}
 function reporterReasons(r){var out=[],f=r.field||'',fld0=(f.split(',')[0]||'').trim();if(fld0)out.push('최근 '+fld0+' 분야 기사 다수 작성');if(CTX.signals&&CTX.signals.eco&&/산업|경제|환경|과학|사회/.test(f))out.push('ESG·친환경 산업 담당');if(CTX.signals&&CTX.signals.public&&/경제|사회|지역|정치/.test(f))out.push('공공기관·정책 기사 경험');if(/지역|일보|매일/.test(r.media+f))out.push('지역경제 기사 작성');if(r.matched&&r.matched.length)out.push('입력 키워드 '+r.matched.slice(0,3).join('·')+' 일치');out.push('성향: '+r.tone);if(r.email)out.push('개인 이메일 확인');return out.slice(0,5);}
@@ -1629,7 +1623,7 @@ async function generate(){
  var _adapted=_ai&&adaptIdeas(_ai.ideas);
  if(_adapted){ IDEAS=_adapted; } else { buildIdeas(); }
  QUESTIONS=buildQuestions((CTX.biz&&CTX.biz.type)||'service'); /* 업종별 인터뷰 질문 세팅 */
- buildStrategy();buildMatches();
+ buildStrategy(); await buildMatches();
  var best=0,bs=-1;IDEAS.forEach(function(_,i){var c=computeScore(i).current;if(c>bs){bs=c;best=i;}});selIdea=best;
  renderStrategy();renderIdeaRows();renderReps();
  lockSteps();
@@ -2709,15 +2703,14 @@ function mvpSend(){
  var body=((document.getElementById('m_body')||{}).value||'');
  /* 기자 선택 여부 */
  if(!r){ if(st)st.innerHTML='⚠️ 먼저 기자를 선택하세요.'; return; }
- /* 실제 기자 DB 의 email 필드를 그대로 사용 */
- var to=String(r.email||'').trim();
- /* 이메일 없음/형식 오류 → 발송하지 않고 오류 표시 */
- if(!to){ if(st)st.innerHTML='⚠️ 선택한 기자의 이메일이 없어 발송할 수 없습니다. (기자 DB의 email 누락)'; return; }
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){ if(st)st.innerHTML='⚠️ 기자 이메일 형식이 올바르지 않습니다: '+esc(to); return; }
+ /* 실제 이메일은 서버에만 있고 프런트엔 마스킹만 있음. 유효한 기자(id) 인지 확인 */
+ if(r.id===undefined||r.id===null){ if(st)st.innerHTML='⚠️ 선택한 기자 정보가 올바르지 않습니다. (기자를 다시 선택하세요)'; return; }
+ var masked=String(r.email||'').trim();
+ if(!masked){ if(st)st.innerHTML='⚠️ 선택한 기자의 이메일이 없어 발송할 수 없습니다.'; return; }
  if(!subject){ if(st)st.innerHTML='⚠️ 메일 제목이 비어 있습니다.'; return; }
  if(!body.trim()){ if(st)st.innerHTML='⚠️ 메일 본문이 비어 있습니다.'; return; }
  /* 발송 전 최종 검토 화면 표시 (확인 후에만 Resend 호출) */
- showFinalReview(r,to,subject,body);
+ showFinalReview(r,masked,subject,body);
 }
 
 /* ② 발송 전 최종 검토 — 기자명/언론사/실제 이메일/제목/본문 표시 */
@@ -2727,7 +2720,7 @@ function showFinalReview(r,to,subject,body){
   box.innerHTML=
    '<div class="cfrow"><div class="cfk">기자명</div><div class="cfv">'+esc(r.name||'-')+'</div></div>'+
    '<div class="cfrow"><div class="cfk">언론사</div><div class="cfv">'+esc(r.media||'-')+'</div></div>'+
-   '<div class="cfrow"><div class="cfk">실제 발송 이메일</div><div class="cfv"><b>'+esc(to)+'</b></div></div>'+
+   '<div class="cfrow"><div class="cfk">발송 이메일</div><div class="cfv"><b>'+esc(to)+'</b> <span style="color:#8a90a2;font-size:11px">(보안상 마스킹 표시 · 서버에서 실제 주소로 전송)</span></div></div>'+
    '<div class="cfrow"><div class="cfk">메일 제목</div><div class="cfv">'+esc(subject)+'</div></div>'+
    '<div class="cfrow"><div class="cfk">메일 본문</div><div class="cfv" style="white-space:pre-wrap;max-height:220px;overflow:auto;font-size:12px;line-height:1.6">'+esc(body)+'</div></div>';
  }
@@ -2749,15 +2742,16 @@ function confirmAndSend(r,to,subject,body){
  if(st)st.innerHTML='⏳ 메일 발송 중…';
  function restore(){ if(btn){ btn.disabled=false; var lb=btn.getAttribute('data-label'); if(lb)btn.textContent=lb; } }
  var base=String(window.API_BASE_URL||'').replace(/\/+$/,'');
+ /* 실제 이메일은 프런트가 모른다 → reporterId 를 보내고 서버가 조회해 발송 */
  fetch(base+'/api/send-mail',{method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({to:to,subject:subject,body:body,company:company,reporter:r.name})})
+   body:JSON.stringify({reporterId:r.id,subject:subject,body:body,company:company,reporter:r.name})})
   .then(function(res){return res.json().catch(function(){return {ok:false};});})
   .then(function(j){
    restore();
    if(j&&j.ok){
-    if(st)st.innerHTML='✅ 메일이 정상적으로 발송되었습니다. ('+esc(to)+')';
+    if(st)st.innerHTML='✅ 메일이 정상적으로 발송되었습니다. ('+esc(r.name||r.media||'기자')+')';
     try{
-     HISTORY.unshift({id:++histSeq,sendMode:'send',name:r.name,media:r.media,reporterEmail:to,email:to,subject:subject,body:body,company:company,ideaTitle:(IDEAS[selIdea]&&IDEAS[selIdea].title)||'',aiScore:(typeof computeScore==='function'?computeScore(selIdea).current:0),prScore:(typeof computePRQuality==='function'?computePRQuality().score:0),attachCount:0,sentAt:_nowStr(),status:'발송 완료',messageId:(j.id||''),url:'',title:'',date:'',stageLog:{'발송 완료':{date:_today(),owner:'',memo:'Resend 발송 성공'}}});
+     HISTORY.unshift({id:++histSeq,sendMode:'send',name:r.name,media:r.media,reporterEmail:to,email:to,subject:subject,body:body,company:company,ideaTitle:(IDEAS[selIdea]&&IDEAS[selIdea].title)||'',aiScore:(typeof computeScore==='function'?computeScore(selIdea).current:0),prScore:(typeof computePRQuality==='function'?computePRQuality().score:0),attachCount:0,sentAt:_nowStr(),status:'발송 완료',messageId:(j.id||''),url:'',title:'',date:'',stageLog:{'발송 완료':{date:_today(),owner:'',memo:'Resend 발송 성공(서버 이메일 조회)'}}});
      _saveHist(); renderTrackSummary(); renderHistory();
     }catch(e){}
     try{ openStep('step-manage',7); }catch(e){}

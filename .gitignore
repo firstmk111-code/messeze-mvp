@@ -8,6 +8,14 @@ backend/.env
 *.env
 !*.env.example
 
+# 기자 DB — 공개 저장소엔 절대 커밋 금지 (실제 이메일 포함, 암호문 포함)
+# 기자DB는 별도 "비공개" 저장소(messeze-mvp-backend)에만 둔다.
+backend/data/reporters.json
+backend/data/reporters.enc
+backend/data/*.csv
+backend/data/_convert.js
+backend/data/_encrypt.js
+
 # 로그 · 임시
 *.log
 npm-debug.log*
