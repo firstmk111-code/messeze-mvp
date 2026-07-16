@@ -1267,7 +1267,7 @@ function buildIdeas(){
  var event=_findKw(/[가-힣A-Za-z]*상담회|[가-힣]*박람회|[가-힣]*전시회|[가-힣]*미팅/,'');
  var pubOrg=(((_val('f_about')+' '+_val('f_case')).match(/[가-힣]+(?:광역시|특별시|시|도|군|구)\s?[가-힣]*사무소/)||[''])[0])||((_val('f_about').match(/[가-힣]{2,}(?:시청|도청|군청|구청)/)||[''])[0])||'지자체·공공기관';
  var ecoFlag=CTX.signals.eco,exportFlag=CTX.signals.export||region||venueRaw;
- var matsExport=['강남마트 등 현지 유통망 매장 사진','참가기업 제품 사진','상담회 현장 사진','참가기업 대표 코멘트','예상 상담 규모·목표 수출액'];
+ var matsExport=['현지 유통망 등 현지 유통망 매장 사진','참가기업 제품 사진','상담회 현장 사진','참가기업 대표 코멘트','예상 상담 규모·목표 수출액'];
  /* 보완자료는 이전 State를 재사용하지 않고 '현재 기업 유형'에서 매번 새로 생성한다.
     실제 수출 행사(유통망+행사)가 있는 제조·공공기관일 때만 수출용 자료, 그 외엔 유형별 자료. */
  var biz=CTX.biz||analyzeCompany();
@@ -1456,7 +1456,7 @@ var FIELD_CAT=[{key:'it',label:'IT·과학'},{key:'전자',label:'IT·과학'},{
 function normalizeField(field){var segs=String(field||'').split(',').map(function(s){return s.trim();}).filter(Boolean);var out=[],seen={};segs.forEach(function(seg){var low=seg.toLowerCase(),label=null;for(var i=0;i<FIELD_CAT.length;i++){if(low.indexOf(FIELD_CAT[i].key.toLowerCase())>=0){label=FIELD_CAT[i].label;break;}}if(!label)label=seg.split(/\s+/)[0];if(label&&!seen[label]){seen[label]=1;out.push(label);}});return out;}
 function getShortField(field){return normalizeField(field).slice(0,2).join(' · ');}
 
-var SYN={'디자인':['디자인','문화','콘텐츠'],'마케팅':['마케팅','브랜드','문화','콘텐츠'],'브랜드':['브랜드','마케팅','문화'],'도로표지병':['산업','경제','건설','환경','지역'],'볼라드':['산업','건설','지역','안전'],'친환경':['환경','산업','경제','사회'],'재활용':['환경','사회','산업'],'도로안전시설물':['산업','건설','지역','사회'],'태양광':['산업','경제','환경','과학'],'제조':['산업','경제','과학'],'수출':['경제','산업','국제','무역'],'공공조달':['경제','사회','정치'],'안전':['사회','지역','산업'],'스마트':['it','과학','산업'],'베트남':['국제','경제','산업'],'침장':['산업','생활','유통','경제'],'섬유':['산업','경제','패션','지역'],'판로개척':['경제','유통','산업'],'강남마트':['유통','경제','생활'],'k-bedding':['산업','생활','경제'],'수출상담회':['경제','산업','국제'],'유통':['유통','경제','생활']};
+var SYN={'디자인':['디자인','문화','콘텐츠'],'마케팅':['마케팅','브랜드','문화','콘텐츠'],'브랜드':['브랜드','마케팅','문화'],'도로표지병':['산업','경제','건설','환경','지역'],'볼라드':['산업','건설','지역','안전'],'친환경':['환경','산업','경제','사회'],'재활용':['환경','사회','산업'],'도로안전시설물':['산업','건설','지역','사회'],'태양광':['산업','경제','환경','과학'],'제조':['산업','경제','과학'],'수출':['경제','산업','국제','무역'],'공공조달':['경제','사회','정치'],'안전':['사회','지역','산업'],'스마트':['it','과학','산업'],'베트남':['국제','경제','산업'],'침장':['산업','생활','유통','경제'],'섬유':['산업','경제','패션','지역'],'판로개척':['경제','유통','산업'],'현지 유통망':['유통','경제','생활'],'k-bedding':['산업','생활','경제'],'수출상담회':['경제','산업','국제'],'유통':['유통','경제','생활']};
 var TERMW={'디자인':24,'마케팅':22,'브랜드':20,'콘텐츠':22,'문화':12,'it':10,'과학':8,'산업':12,'경제':12,'환경':14,'건설':12,'지역':12,'사회':11,'안전':10,'국제':10,'정치':6,'유통':12,'기업':10,'무역':12,'패션':12,'생활':10};
 function probes(t){return SYN[t]?[t].concat(SYN[t]):[t];}
 function tokenize(s){return (s||'').toLowerCase().split(/[\s,.\/·\(\)\[\]#"'’“”\-–—|>]+/).map(function(t){return t.trim();}).filter(function(t){return t.length>=2&&t!=='추가'&&t!=='확인'&&t!=='필요';});}
@@ -1903,7 +1903,7 @@ function _prFacts(){
   amount:g(/[0-9,]+\s*억\s*원?/),
   firms:g(/참가기업\s*[0-9]+\s*개사|[0-9]+\s*개사/),
   date:g(/[0-9]{1,2}월\s*[0-9]{1,2}일/),
-  place:g(/[가-힣]{0,3}호텔\s*[가-힣A-Za-z]+|니코사이공|[가-힣]{2,8}컨벤션센터/).replace(/(에서는|에서|에는|에)$/,''),
+  place:g(/[가-힣]{0,3}호텔\s*[가-힣A-Za-z]+|[가-힣]{2,8}컨벤션센터/).replace(/(에서는|에서|에는|에)$/,''),
   lead:g(/이사장\s*[가-힣]{2,4}|대표\s*[가-힣]{2,4}|회장\s*[가-힣]{2,4}/)
  };
 }
@@ -2081,7 +2081,7 @@ function buildPressRelease(){
  var c={ev:ev,reg:reg,amt:amt,firmN:firmN,city:f.city,venue:f.venue,stores:f.stores,indCore:indCore,actor:actorShort};
  var L=[];
  /* ── 제목: 홍보문이 아니라 기사 헤드라인 (주체+구체행위, 수식어 없이) ──
-    예) 대구 침장기업 5개사, 베트남 강남마트와 수출상담회 추진 */
+    예) 대구 침장기업 5개사, 베트남 현지 유통망와 수출상담회 추진 */
  L.push('[제목] '+actorHead+', '+(reg?reg+' ':'')+(f.venue?f.venue+'와 ':'')+(isEvent?f.event:(prod+' 사업'))+' 추진');
  /* ── 부제목: 핵심 수치·일정 팩트 2개 ── */
  var sub=[];
@@ -2428,34 +2428,28 @@ function buildMail(){var it=IDEAS[selIdea],r=REPS[selRep];if(!it||!r)return;docu
 function goMail(){if(!repChosen){document.getElementById('repPicked').innerHTML='<b style="color:#b3261e">먼저 기자를 선택하세요.</b>';return;}ensurePR();buildMail();openStep('step-mail',5);}
 
 /* ===== 원클릭 데모 모드 =====
-   샘플(K-Bedding) 자동 입력 → 분석 → 인터뷰 자동응답 → 기자선택 → 보도자료·메일 →
+   샘플 자동 입력 → 분석 → 인터뷰 자동응답 → 기자선택 → 보도자료·메일 →
    발송 준비 → (autoSend 시) TEST_EMAIL 자동 발송. 각 단계 사이 딜레이로 시연 흐름을 보여준다. */
 var DEMO_NEXT=null, DEMO_RUNNING=false, DEMO_AUTOSEND=false;
 function demoToast(m){var t=document.getElementById('demoToast');if(t){t.innerHTML=m;t.classList.remove('hidden');}}
-function fillSampleData(){
- var S={f_name:'대구경북섬유직물공업협동조합', f_ind:'섬유, 침장산업',
-  f_kw:'K-Bedding, 침장, 수출상담회, 베트남, 강남마트, 판로개척',
-  f_topic:"베트남 강남마트 초청 'K-Bedding' 수출상담회 사전 미팅",
-  f_about:"대구경북섬유직물공업협동조합(이사장 이석기)은 대구 침장(寢具)산업의 베트남 시장 진출을 추진하고 있다.\n베트남 최대 한국상품 유통 플랫폼 '강남마트' 관계자를 대구로 초청해 침장 브랜드와 사전 미팅을 진행했으며, 대구광역시 호치민사무소와 협력해 베트남 시장 판로개척을 본격화하고 있다.\n강남마트는 베트남 내 52개 소매 매장을 운영하며 연간 200억 원 규모의 한국 제품을 수입한다.",
-  f_case:"강남마트 초청 사전 미팅 진행 — MOU 이후 첫 실질 성과.\n참가기업 5개사 확정, 9월 18일 호치민 호텔 니코사이공에서 '2025 K-Bedding 수출상담회' 개최 예정.\n대구광역시 호치민사무소 협력, 강남마트 52개 매장·연 200억 원 수입 유통망 연계."};
- Object.keys(S).forEach(function(k){var el=document.getElementById(k);if(el)el.value=S[k];});
- renderKwTags();
-}
+/* (원본 하드코딩 샘플 제거) 실제 fillSampleData 는 하단에서 demo-data.js 기반으로 오버라이드됨 */
+function fillSampleData(){ /* overridden below (uses DemoData) */ }
 function _demoAutoAnswer(){
  /* 데모: '품질 높은' 구체 답변을 자동 입력 (수치·인용·사례 포함) → 실제로 점수가 오른다 */
+ /* 데모용 일반 답변 (특정 기업명·수치 하드코딩 없음) */
  var A={
-  time:'이번 9월 개최 예정으로, 최근 MOU 체결 직후의 성과입니다.',
-  num:'참가기업 5개사, 강남마트 52개 매장, 연 200억 원 규모 수입 계약을 진행합니다.',
-  case:'대구 침장기업 5개사가 참여하며, 강남마트와 첫 공급 계약을 맺었습니다.',
-  quote:'이석기 이사장은 "이번 상담회로 베트남 수출 교두보를 마련하겠다"고 말했습니다.',
-  ind:'대구 지역 섬유·침장 산업의 수출 확대와 일자리 창출로 이어집니다.',
-  diff:'개별 기업이 어려운 해외 판로를 조합이 공동으로 개척한 첫 사례입니다.',
-  plan:'하반기 2차 상담회를 추진하고 현지 매장 입점을 확대할 계획입니다.',
-  export:'베트남 강남마트와 연 200억 원 규모 수출 상담을 진행 중입니다.',
-  cert:'침장 제품 KC 인증과 시험성적서를 보유하고 있습니다.',
-  production:'월 5만 세트 생산 CAPA를 확보하고 있습니다.',
-  client:'강남마트, 대구시 호치민사무소 등과 협력하고 있습니다.',
-  review:'참가기업 만족도가 높아 2차 참여 문의가 이어집니다.'
+  time:'최근 발표된 사안으로 시의성이 있습니다.',
+  num:'주요 성과 수치를 확보하고 있습니다.',
+  case:'구체적인 협력·계약 사례가 있습니다.',
+  quote:'대표자의 공식 코멘트를 제공할 수 있습니다.',
+  ind:'해당 산업의 성장·확대와 연결되는 사안입니다.',
+  diff:'기존과 차별화되는 시도입니다.',
+  plan:'향후 사업 확대 계획을 갖고 있습니다.',
+  export:'해외 시장 진출을 추진하고 있습니다.',
+  cert:'관련 인증·시험성적서를 보유하고 있습니다.',
+  production:'생산·공급 역량을 확보하고 있습니다.',
+  client:'주요 협력 기관과 함께하고 있습니다.',
+  review:'관계자 반응이 긍정적입니다.'
  };
  QUESTIONS.forEach(function(q){
   if(q.id==='proof'){ HELD_MATERIALS=['현장사진','인증서','계약서']; answers['proof']=0.9; ANSWER_TEXT['proof']=HELD_MATERIALS.join(', '); return; }
@@ -2472,7 +2466,7 @@ function demoRun(autoSend){
  if(DEMO_RUNNING){demoToast('데모가 이미 진행 중입니다…');return;}
  DEMO_RUNNING=true; DEMO_AUTOSEND=(autoSend!==false);
  fillSampleData();
- demoToast('🎬 <b>데모 시연</b> ① 샘플(K-Bedding) 자동 입력 · AI 분석 시작…');
+ demoToast('🎬 <b>데모 시연</b> ① 샘플 자동 입력 · AI 분석 시작…');
  DEMO_NEXT=_demoAfterAnalysis;   // onAnalysisDone 완료 후 자동 호출
  generate();
 }
@@ -2973,27 +2967,8 @@ function exportVDB(){
  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='AI검증_누적데이터.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-/* --- 기준 사례(K-Bedding) 1건 시드 --- */
-function seedVDB(){
- if(VERIFY_DB.some(function(r){return r.seed;}))return;
- VERIFY_DB.push({
-  id:'seed_kbedding', createdAt:'2025-09-15', seed:true,
-  company:'대구경북섬유직물공업협동조합', industry:'섬유, 침장산업',
-  ideaTitle:"강남마트 초청 사전 미팅, K-Bedding 수출상담회 성과 기대",
-  aiScore:85, aiVerdict:'발송 권장',
-  criteria:{시의성:88,산업성:82,공공성:78,데이터:80,사회성:72,시장성:90,지역성:86},
-  reporter:{name:'산업부',media:'대구일보',email:'sample@daegu.example',score:88,tone:'지역지'},
-  reporterTop:['산업부(대구일보)','경제부(매일신문)','유통부(아시아경제)'],
-  mailSubject:'[보도자료] 대구경북섬유직물공업협동조합, 베트남 강남마트 K-Bedding 수출상담회',
-  mailBody:'안녕하세요, 기자님.\n\n대구경북섬유직물공업협동조합입니다.\n베트남 최대 한국상품 유통 플랫폼 강남마트 관계자를 초청해 침장 브랜드 사전 미팅을 진행했으며, 9월 18일 호치민에서 2025 K-Bedding 수출상담회를 개최합니다.\n관련 사진·자료와 참가기업 대표 인터뷰를 제공해드릴 수 있습니다.',
-  sent:true, mailVerifyStatus:'검증 완료',
-  published:true, articleMedia:'대구일보',
-  articleTitle:'대구 침장업계, 베트남 강남마트 통해 K-Bedding 수출 본격화',
-  articleUrl:'', articleDate:'2025-09-19',
-  resolved:true, stages:{}
- });
- _saveVDB();
-}
+/* 특정 기업 검증 시드 제거(범용화). 아래 초기화의 seedVDB()는 no-op override 로 동작. */
+function seedVDB(){ /* no-op */ }
 
 /* ============================================================
    [범용 엔진 연결] — 특정 기업/문장 하드코딩 제거.
