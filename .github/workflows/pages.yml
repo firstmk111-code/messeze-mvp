@@ -1,0 +1,44 @@
+name: Deploy frontend to GitHub Pages
+
+# main 브랜치의 frontend/ 가 바뀔 때마다 자동 배포 (수동 실행도 가능)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+# Pages 배포에 필요한 권한
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 동시 배포 방지
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload frontend folder as Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # ⬇️ frontend 폴더만 배포 (backend 는 포함되지 않음)
+          path: ./frontend
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
