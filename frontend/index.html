@@ -3,6 +3,10 @@
 <title>MESSEZE · AI PR Agent</title>
 <!-- 백엔드 API 주소 설정 (배포 후 config.js에서 변경) -->
 <script src="./config.js"></script>
+<!-- 범용 기사/메일 생성 엔진 + 데모 데이터 (기사 생성·메일 생성 함수 분리) -->
+<script src="./js/article-generator.js"></script>
+<script src="./js/mail-generator.js"></script>
+<script src="./js/demo-data.js"></script>
 <style>
 :root{--g:#3FB266;--gd:#2f9a55;--gl:#eaf7ef;--ink:#16223f;--muted:#56607a;--line:#e7ebf4;--bg:#eef1f7}
 *{box-sizing:border-box;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif}
@@ -758,20 +762,38 @@ tr.on{background:var(--gl)}
  <aside class="inpanel card">
   <h2 class="t">① 기업 정보 입력</h2>
   <p class="desc">입력한 모든 정보를 AI가 하나의 맥락으로 분석합니다.</p>
-  <div class="fld"><label>기업명</label><input id="f_name" type="text" oninput="onCompanyInputChanged()" value="대구경북섬유직물공업협동조합"></div>
-  <div class="fld"><label>산업분야</label><input id="f_ind" type="text" oninput="onCompanyInputChanged()" value="섬유, 침장산업"></div>
-  <div class="fld"><label>핵심 키워드</label><textarea id="f_kw" rows="2" oninput="onCompanyInputChanged('kw')">K-Bedding, 침장, 수출상담회, 베트남, 강남마트, 판로개척</textarea><div id="kwTags"></div></div>
-  <div class="fld"><label>홍보 주제</label><input id="f_topic" type="text" oninput="onCompanyInputChanged()" value="베트남 강남마트 초청 'K-Bedding' 수출상담회 사전 미팅"></div>
-  <div class="fld"><label>기업 및 제품/서비스 주요 정보</label><textarea id="f_about" rows="6" oninput="onCompanyInputChanged()">대구경북섬유직물공업협동조합(이사장 이석기)은 대구 침장(寢具)산업의 베트남 시장 진출을 추진하고 있다.
-베트남 최대 한국상품 유통 플랫폼 '강남마트' 관계자를 대구로 초청해 침장 브랜드와 사전 미팅을 진행했으며,
-대구광역시 호치민사무소와 협력해 베트남 시장 판로개척을 본격화하고 있다.
-강남마트는 베트남 내 52개 소매 매장을 운영하며 연간 200억 원 규모의 한국 제품을 수입한다.</textarea></div>
-  <div class="fld"><label>최근 성과 또는 사례</label><textarea id="f_case" rows="4" oninput="onCompanyInputChanged()">강남마트 초청 사전 미팅 진행 — MOU 이후 첫 실질 성과.
-참가기업 5개사 확정, 9월 18일 호치민 호텔 니코사이공에서 '2025 K-Bedding 수출상담회' 개최 예정.
-대구광역시 호치민사무소 협력, 강남마트 52개 매장·연 200억 원 수입 유통망 연계.</textarea></div>
-  <button class="btn pri" onclick="generate()">AI 분석 시작</button>
-  <button class="btn demo" onclick="demoRun(true)" title="샘플 데이터로 기사 생성→기자 추천→메일→TEST_EMAIL 발송까지 자동 시연">🎬 원클릭 데모 시연</button>
-  <p class="demohelp">샘플(K-Bedding)이 이미 입력되어 있습니다. 위 버튼을 누르면 분석→기사→기자→메일→<b>TEST_EMAIL 발송</b>까지 자동으로 진행됩니다.</p>
+  <div class="fld"><label>샘플 불러오기 (선택)</label>
+    <select id="f_sample" onchange="loadSample(this.value)" style="width:100%">
+      <option value="">— 직접 입력 —</option>
+    </select></div>
+  <div class="fld"><label>기업명 또는 기관명 *</label><input id="f_name" type="text" oninput="onCompanyInputChanged()" placeholder="예: 한빛정밀"></div>
+  <div class="fld"><label>업종 *</label><input id="f_ind" type="text" oninput="onCompanyInputChanged()" placeholder="예: 제조업, 자동차 부품"></div>
+  <div class="fld"><label>기사 유형 *</label>
+    <select id="f_type" style="width:100%"></select></div>
+  <div class="fld"><label>주요 제품·서비스</label><input id="f_product" type="text" placeholder="예: 초경량 전기차 배터리 케이스"></div>
+  <div class="fld"><label>기사 주제 *</label><input id="f_topic" type="text" oninput="onCompanyInputChanged()" placeholder="예: 초경량 배터리 케이스 신제품 출시"></div>
+  <div class="fld"><label>핵심 사실</label><textarea id="f_about" rows="3" oninput="onCompanyInputChanged()" placeholder="누가·무엇을·어떻게 했는지 사실 위주로 입력"></textarea></div>
+  <div class="fld"><label>날짜</label><input id="f_date" type="text" placeholder="예: 2026년 3월 12일"></div>
+  <div class="fld"><label>장소</label><input id="f_place" type="text" placeholder="예: 경기 화성 본사 / 베트남"></div>
+  <div class="fld"><label>주요 성과 및 수치</label><textarea id="f_metrics" rows="2" placeholder="예: 무게 30% 경량화, 연 50만 개"></textarea></div>
+  <div class="fld"><label>참여 대상 또는 협력 기관</label><input id="f_partners" type="text" placeholder="예: 국내 완성차 2개사"></div>
+  <div class="fld"><label>대표자·담당자 이름</label><input id="f_repName" type="text" placeholder="예: 김철수"></div>
+  <div class="fld"><label>대표자·담당자 직책</label><input id="f_repTitle" type="text" placeholder="예: 대표이사"></div>
+  <div class="fld"><label>대표자·담당자 발언(인용)</label><textarea id="f_quote" rows="2" placeholder="실제 발언만 입력 (지어내지 않습니다)"></textarea></div>
+  <div class="fld"><label>향후 계획</label><textarea id="f_plan" rows="2" placeholder="예: 유럽 완성차로 공급 확대"></textarea></div>
+  <div class="fld"><label>기업 소개</label><textarea id="f_intro" rows="2" placeholder="예: 2005년 설립된 자동차 부품 전문 기업"></textarea></div>
+  <div class="fld"><label>담당자 이메일</label><input id="f_email" type="email" placeholder="예: pr@company.com"></div>
+  <div class="fld"><label>담당자 연락처</label><input id="f_phone" type="text" placeholder="예: 031-000-0000"></div>
+  <div class="fld"><label>핵심 키워드 (기자 매칭용)</label><textarea id="f_kw" rows="2" oninput="onCompanyInputChanged('kw')" placeholder="쉼표로 구분"></textarea><div id="kwTags"></div></div>
+  <div class="fld"><label>기사 분량</label>
+    <select id="f_length" style="width:100%">
+      <option value="short">짧게</option>
+      <option value="normal" selected>보통 (800~1,200자)</option>
+      <option value="detailed">상세</option>
+    </select></div>
+  <button class="btn pri" onclick="generate()">기사거리 분석 시작</button>
+  <button class="btn demo" onclick="demoRun(true)" title="샘플 데이터로 자동 시연">🎬 원클릭 데모 시연</button>
+  <p class="demohelp">필수(*) 항목을 입력하거나 위에서 <b>샘플 불러오기</b> 후 시작하세요. 정보가 부족하면 <b>추가 정보 질문</b>이 표시됩니다.</p>
  </aside>
 
  <main class="respanel">
@@ -2972,6 +2994,73 @@ function seedVDB(){
  });
  _saveVDB();
 }
+
+/* ============================================================
+   [범용 엔진 연결] — 특정 기업/문장 하드코딩 제거.
+   아래 함수들은 위의 규칙기반 함수를 "덮어써서"(동일명 후행 선언 우선)
+   입력값만으로 유형별 완성 기사·메일을 생성한다.
+   ============================================================ */
+var ARTICLE_OBJ = null;
+
+/* 폼 입력 → 엔진 입력 객체 (하드코딩 없음, 전부 사용자 입력) */
+function collectArticleInput(){
+ return {
+  company:_val('f_name'), industry:_val('f_ind'), product:_val('f_product'),
+  topic:_val('f_topic'), facts:_val('f_about'), type:_val('f_type'),
+  date:_val('f_date'), place:_val('f_place'), metrics:_val('f_metrics'),
+  partners:_val('f_partners'), repName:_val('f_repName'), repTitle:_val('f_repTitle'),
+  quote:_val('f_quote'), plan:_val('f_plan'), intro:_val('f_intro'),
+  email:_val('f_email'), phone:_val('f_phone')
+ };
+}
+
+/* 완성 기사 생성 — 정보 부족 시 완성 기사 대신 '추가 정보 질문' 표시 */
+function buildPressRelease(){
+ var input=collectArticleInput();
+ var miss=(window.ArticleGen)?ArticleGen.checkMissingInfo(input):[];
+ if(miss.length){
+  ARTICLE_OBJ={text:'',missing:miss};
+  var L=['⚠ 기사 작성에 필요한 추가 정보','','아래 항목을 입력하면 완성 기사가 자동 생성됩니다.',''];
+  miss.forEach(function(m){L.push('· ['+m.label+'] '+m.question);});
+  return L.join('\n');
+ }
+ var len=_val('f_length')||'normal';
+ ARTICLE_OBJ=ArticleGen.generateArticle(input,{length:len});
+ return ARTICLE_OBJ.text;
+}
+
+/* 기자 맞춤 메일 — 상단(제안이유·핵심3줄·취재포인트)+하단(완성기사·기업소개·문의) */
+function _engineMail(r){
+ var art=(ARTICLE_OBJ&&ARTICLE_OBJ.text)?ARTICLE_OBJ:{text:(_val('pr_body')||PR_TEXT||'')};
+ return (window.MailGen)?MailGen.generateMail(r||{},collectArticleInput(),art):{subject:'',body:''};
+}
+function buildMailSubject(it,r){ return _engineMail(r).subject; }
+function buildMailBody(it,r){ return _engineMail(r).body; }
+
+/* 폼 채우기 / 샘플 불러오기 (샘플은 demo-data.js 로만 관리) */
+function _fillEngineFields(inp){
+ var map={f_name:'company',f_ind:'industry',f_product:'product',f_topic:'topic',f_about:'facts',f_type:'type',f_date:'date',f_place:'place',f_metrics:'metrics',f_partners:'partners',f_repName:'repName',f_repTitle:'repTitle',f_quote:'quote',f_plan:'plan',f_intro:'intro',f_email:'email',f_phone:'phone'};
+ Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)el.value=inp[map[id]]||'';});
+ var kw=document.getElementById('f_kw'); if(kw){kw.value=[inp.industry,inp.product,inp.topic].filter(Boolean).join(', ');}
+ if(typeof renderKwTags==='function')renderKwTags();
+}
+function loadSample(id){
+ if(!id||!window.DemoData)return;
+ var s=DemoData.DEMO_SAMPLES.filter(function(x){return x.id===id;})[0];
+ if(s)_fillEngineFields(s.input);
+}
+/* 원클릭 데모용 샘플(하드코딩 제거 → 데모 데이터 사용) */
+function fillSampleData(){ if(window.DemoData)_fillEngineFields(DemoData.DEMO_SAMPLES[0].input); }
+/* 특정 기업 검증 시드 제거(범용화) */
+function seedVDB(){ /* no-op: 하드코딩 샘플 케이스 시드 제거 */ }
+
+/* 유형/샘플 셀렉트 옵션 채우기 */
+(function initGenericUI(){
+ var ts=document.getElementById('f_type');
+ if(ts&&window.ArticleGen&&!ts.options.length){ ArticleGen.ARTICLE_TYPES.forEach(function(t){var o=document.createElement('option');o.value=t.key;o.textContent=t.label;ts.appendChild(o);}); }
+ var ss=document.getElementById('f_sample');
+ if(ss&&window.DemoData&&ss.options.length<=1){ DemoData.DEMO_SAMPLES.forEach(function(s){var o=document.createElement('option');o.value=s.id;o.textContent=s.label;ss.appendChild(o);}); }
+})();
 
 /* === 초기화 === */
 _loadHist(); _loadVDB(); seedVDB();
